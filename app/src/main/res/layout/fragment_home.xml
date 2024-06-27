@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:foregroundTintMode="src_over"
     android:paddingHorizontal="20dp"
     tools:context=".HomeFragment">
 
@@ -45,12 +46,15 @@
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/create_patient"
-        android:layout_width="74dp"
-        android:layout_height="63dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="32dp"
         android:clickable="true"
         android:contentDescription="Add a patient"
+        android:focusable="true"
+        android:foregroundTint="#D1C8C8"
+        android:requiresFadingEdge="horizontal|none"
         android:src="@android:drawable/ic_input_add"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

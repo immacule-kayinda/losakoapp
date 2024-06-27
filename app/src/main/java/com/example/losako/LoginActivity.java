@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.losako.models.DatabaseHelper;
@@ -24,6 +25,24 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         checkIfLoggedIn();
+
+        OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled */) {
+            @Override
+            public void handleOnBackPressed() {
+                // Votre logique personnalisée ici
+                // Par exemple, vérifiez si l'utilisateur est connecté et fermez l'application
+                SharedPreferences sharedPreferences = getSharedPreferences("LoginData", MODE_PRIVATE);
+                boolean isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false);
+                if (isLoggedIn) {
+                    finishAffinity(); // Ferme toutes les activités de l'application
+                    System.exit(0); // Assurez-vous que l'application est fermée complètement
+                } else {
+                    // Si l'utilisateur n'est pas connecté, laissez-le revenir à l'écran précédent
+                    Toast.makeText(LoginActivity.this, "Bonjour", Toast.LENGTH_LONG).show();
+                }
+            }
+        };
+        getOnBackPressedDispatcher().addCallback(this, callback);
 
         // Initialisez les vues
         TextInputLayout usernameTextInputLayout = findViewById(R.id.textInputLayout2);
@@ -53,6 +72,7 @@ public class LoginActivity extends AppCompatActivity {
                 // Démarrer SecondActivity après une connexion réussie
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class); // Remplacez par le nom de votre activité de destination
                 startActivity(intent);
+                finish();
             } else {
                 Toast.makeText(LoginActivity.this, "Numéro de téléphone ou mot de passe incorrects", Toast.LENGTH_SHORT).show();
             }
@@ -86,6 +106,7 @@ public class LoginActivity extends AppCompatActivity {
         editor.putString("nomPersonnel", personnelName);
         editor.apply();
     }
+
     public String getNomPersonnel(String phoneNumber, String password) {
         SQLiteDatabase db = getDb();
         Cursor cursor = db.rawQuery("SELECT nom_personnel FROM personnel WHERE phone_number_personnel=? AND password=?", new String[]{phoneNumber, password});

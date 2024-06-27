@@ -42,7 +42,6 @@ public class CreateAcountActivity extends AppCompatActivity {
         confirmPasswordPersonnelEditTextLayout = findViewById(R.id.confirmPasswordPersonnelLayout);
 
 // Convertissez les TextInputLayout en EditText
-        EditText editTextNomPersonnel = editTextNomPersonnelLayout.getEditText();
         EditText editTextPostnomPersonnel = editTextPostnomPersonnelLayout.getEditText();
         EditText editTextPrenomPersonnel = editTextPrenomPersonnelLayout.getEditText();
         EditText editTextAdressePersonnel = editTextAdressePersonnelLayout.getEditText();
@@ -57,7 +56,7 @@ public class CreateAcountActivity extends AppCompatActivity {
             if (validateInputs()) {
                 // Insérer les données dans la base de données
                 insertPersonnelIntoDatabase();
-                saveCredentialsToPreferences(numeroTelephonePersonnel.toString(), passwordPersonnelEditText.toString());
+                saveCredentialsToPreferences(numeroTelephonePersonnel.getText().toString(), passwordPersonnelEditText.getText().toString());
                 Intent intent = new Intent(CreateAcountActivity.this, MainActivity.class);
                 startActivity(intent);
             } else {

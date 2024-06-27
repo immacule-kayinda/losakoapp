@@ -7,14 +7,14 @@ import android.widget.ProgressBar;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-public class SplashActivity extends AppCompatActivity {
+import com.example.losako.models.DatabaseHelper;
 
+public class SplashActivity extends AppCompatActivity {
+DatabaseHelper dbHelper;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
-
-        ProgressBar progressBar = findViewById(R.id.progressBar);
         // Démarrer une opération longue dans un thread en arrière-plan
 
         // Lancer MainActivity après 5000 millisecondes

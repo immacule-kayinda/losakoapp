@@ -3,12 +3,14 @@ package com.example.losako;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.EditText;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -18,29 +20,46 @@ import com.example.losako.adapters.PatientAdapter;
 import com.example.losako.models.DatabaseHelper;
 import com.example.losako.models.Patient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.textfield.TextInputLayout;
+
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Objects;
 
 public class HomeFragment extends Fragment {
-    ArrayList<Patient> patients;
+    private ArrayList<Patient> patients;
+    private PatientAdapter.OnItemClickListener itemClickListener;
     private RecyclerView recyclerViewPatients;
+    PatientAdapter patientAdapter;
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
-
         recyclerViewPatients = view.findViewById(R.id.recycler_view_patients);
-        FloatingActionButton floatingActionButton = view.findViewById(R.id.create_patient);
-        EditText searchEditText = view.findViewById(R.id.search_edit_text);
+        recyclerViewPatients.setLayoutManager(new LinearLayoutManager(requireContext()));
+        return view;
+    }
 
-        // Configuration initiale du RecyclerView
-        recyclerViewPatients.setLayoutManager(new LinearLayoutManager(getContext()));
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
         DatabaseHelper dbHelper = DatabaseHelper.getInstance(requireContext());
+
+        FloatingActionButton floatingActionButton = view.findViewById(R.id.create_patient);
+        TextInputLayout searchInputLayout = view.findViewById(R.id.search_edit_text);
+        EditText searchEditText = searchInputLayout.getEditText();
+        // Configuration initiale du RecyclerView
         patients = dbHelper.getAllPatients();
 
         // Ajoutez un écouteur d'événements pour le champ de recherche
+        assert searchEditText != null;
         searchEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -57,20 +76,22 @@ public class HomeFragment extends Fragment {
         });
 
         // Implémentez l'interface AdapterView.OnItemClickListener
-        PatientAdapter.OnItemClickListener itemClickListener = (parent, position) -> {
+        itemClickListener = (parent, position) -> {
             Patient selectedPatient = patients.get(position);
+            Log.e("Listener", patients.toString());
             // Faites quelque chose avec le patient sélectionné, par exemple naviguer vers un autre fragment
             navigateToDetailsFragment(selectedPatient);
         };
-        floatingActionButton.setOnClickListener(v -> {
-            navigateToCreatePatient();
-        });
-        PatientAdapter patientAdapter = new PatientAdapter(requireContext(), patients, itemClickListener);
+        floatingActionButton.setOnClickListener(v -> navigateToCreatePatient());
+        patientAdapter = new PatientAdapter(requireContext(), patients, itemClickListener);
         recyclerViewPatients.setAdapter(patientAdapter);
 
-        return view;
+        // Centralisez l'observation des données ici
+        dbHelper.getPatientsLiveData().observe(getViewLifecycleOwner(), newPatients -> requireActivity().runOnUiThread(() -> {
+            // Mettez à jour les données de l'adaptateur existant plutôt que de créer un nouveau
+            patientAdapter.setFilteredData(newPatients);
+        }));
     }
-
     private void filterPatients(String searchText) {
         ArrayList<Patient> filteredPatients = new ArrayList<>();
         for (Patient patient : patients) {
@@ -87,6 +108,11 @@ public class HomeFragment extends Fragment {
         transaction.replace(R.id.fragment_container, createPatientFragment);
         transaction.commit();
     }
+
+
+    private int pressCount = 0;
+    private long lastPressTime = 0;
+
 
     private void navigateToDetailsFragment(Patient selectedPatient) {
         // Navigation vers le fragment de détails et passage des données

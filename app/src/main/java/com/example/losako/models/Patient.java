@@ -29,18 +29,13 @@ public class Patient implements Serializable {
         this.dateVenuPatient = dateVenuPatient;
     }
 
-    public Patient(String nom, String postnom, String prenom, String address, String phoneNumber, String maladie) {
-    }
-
-    public Patient clone() {
-        Patient clonedPatient = new Patient();
-        clonedPatient.setIdPatient((int) this.idPatient);
-        clonedPatient.setNomPatient(this.nomPatient);
-        clonedPatient.setPrenomPatient(this.prenomPatient);
-        clonedPatient.setAddressPatient(this.addressPatient);
-        clonedPatient.setPhoneNumberPatient(this.phoneNumberPatient);
-        clonedPatient.setMaladiePatient(this.maladiePatient);
-        return clonedPatient;
+    public Patient(String nomPatient, String postnomPatient, String prenomPatient, String addressPatient, String phoneNumberPatient, String maladiePatient) {
+        this.nomPatient = nomPatient;
+        this.postnomPatient = postnomPatient;
+        this.prenomPatient = prenomPatient;
+        this.addressPatient = addressPatient;
+        this.phoneNumberPatient = phoneNumberPatient;
+        this.maladiePatient = maladiePatient;
     }
 
     public Patient(String nomPatient, String postnomPatient, String prenomPatient,
@@ -53,6 +48,17 @@ public class Patient implements Serializable {
         this.phoneNumberPatient = phoneNumberPatient;
         this.maladiePatient = maladiePatient;
         this.dateVenuPatient = dateVenuPatient;
+    }
+
+    public Patient clone() {
+        Patient clonedPatient = new Patient();
+        clonedPatient.setIdPatient((int) this.idPatient);
+        clonedPatient.setNomPatient(this.nomPatient);
+        clonedPatient.setPrenomPatient(this.prenomPatient);
+        clonedPatient.setAddressPatient(this.addressPatient);
+        clonedPatient.setPhoneNumberPatient(this.phoneNumberPatient);
+        clonedPatient.setMaladiePatient(this.maladiePatient);
+        return clonedPatient;
     }
 
     // Getters

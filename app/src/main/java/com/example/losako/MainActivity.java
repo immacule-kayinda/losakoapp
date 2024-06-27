@@ -1,7 +1,10 @@
 package com.example.losako;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -18,11 +21,31 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled */) {
+            @Override
+            public void handleOnBackPressed() {
+                // Votre logique personnalisée ici
+                // Par exemple, vérifiez si l'utilisateur est connecté et fermez l'application
+                SharedPreferences sharedPreferences = getSharedPreferences("LoginData", MODE_PRIVATE);
+                boolean isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false);
+                if (isLoggedIn) {
+                    finishAffinity(); // Ferme toutes les activités de l'application
+                    System.exit(0); // Assurez-vous que l'application est fermée complètement
+                } else {
+                    // Si l'utilisateur n'est pas connecté, laissez-le revenir à l'écran précédent
+                    Toast.makeText(MainActivity.this, "Bonjour", Toast.LENGTH_LONG).show();
+                }
+            }
+        };
+
+        replaceFragment(new HomeFragment());
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.profil) {
                 replaceFragment(new ProfileFragment());
             } else if (item.getItemId() == R.id.home) {
+                replaceFragment(new HomeFragment());
+            } else {
                 replaceFragment(new HomeFragment());
             }
 

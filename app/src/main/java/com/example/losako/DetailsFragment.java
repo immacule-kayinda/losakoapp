@@ -2,6 +2,7 @@ package com.example.losako;
 
 import static android.content.Context.MODE_PRIVATE;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
@@ -10,7 +11,6 @@ import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -20,20 +20,23 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.losako.adapters.DetailsAdapter;
+import com.example.losako.adapters.PatientAdapter;
 import com.example.losako.models.DatabaseHelper;
 import com.example.losako.models.Patient;
-import com.example.losako.models.PatientWithNotes;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.example.losako.models.Personnel;
+import com.example.losako.models.VocalNote;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.security.SecureRandom;
+import java.util.ArrayList;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -41,17 +44,24 @@ import java.util.Map;
  * create an instance of this fragment.
  */
 public class DetailsFragment extends Fragment {
-
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
+    private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO_AND_WRITE_EXTERNAL_STORAGE = 100;
+    private static final int REQUEST_CODE_RECORD_AUDIO = 100;
+    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private final String LOG_TAG = "AudioRecordTest";
+    private final String[] permissions = {Manifest.permission.RECORD_AUDIO};
     Patient patient;
-    boolean isRecording = false;
+    private String fileName = null;
+    private ArrayList<Patient> patients;
+    private PatientAdapter.OnItemClickListener itemClickListener;
     private CustomFloatingActionButton fabRecord;
-    private MediaRecorder mediaRecorder;
-    private MediaPlayer mediaPlayer;
+    private MediaRecorder recorder;
+    private MediaPlayer player;
     private String audioFilePath;
     private DatabaseHelper dbHelper;
-
     private long startTime;
-
+    // Requesting permission to RECORD_AUDIO
+    private boolean permissionToRecordAccepted = false;
 
     public DetailsFragment() {
         // Required empty public constructor
@@ -65,16 +75,48 @@ public class DetailsFragment extends Fragment {
         return fragment;
     }
 
+    public static String generateAlphanumericFileName(int length) {
+        SecureRandom secureRandom = new SecureRandom();
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(CHARACTERS.charAt(secureRandom.nextInt(CHARACTERS.length())));
+        }
+        return sb.toString() + ".mp3"; // Ajoutez l'extension de fichier souhaitée
+    }
+
+
+    private void startRecording(String fileName) {
+        try {
+            this.fileName = fileName;
+            recorder = new MediaRecorder();
+            recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            recorder.setOutputFile(fileName);
+            recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            recorder.prepare();
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "prepare() failed");
+        }
+
+        recorder.start();
+    }
+
+    private void stopRecording() {
+        recorder.stop();
+        recorder.release();
+        recorder = null;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
     }
+    private DetailsAdapter detailsAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_details, container, false);
-        int patientId = -1;
         if (getArguments() != null) {
             patient = (Patient) getArguments().getSerializable("selectedPatient");
         }
@@ -85,26 +127,67 @@ public class DetailsFragment extends Fragment {
         TextView tvPrenom = view.findViewById(R.id.tvFirstName);
         TextView tvPostNom = view.findViewById(R.id.tvMiddleName);
 
-
-
         tvNom.setText(patient.getNomPatient());
         tvPostNom.setText(patient.getPostnomPatient());
         tvPrenom.setText(patient.getPrenomPatient());
 
         DatabaseHelper dbHelper = DatabaseHelper.getInstance(requireContext());
-        Map<Integer, PatientWithNotes> patientWithNotesMap = dbHelper.getPatientWithNotes(patient.getIdPatient());
-        final float initialScale = 1f; // Taille initiale
-        final float finalScale = 1.5f; // Taille finale (plus grande)
+        ArrayList<VocalNote> vocalNotes = dbHelper.getVocalNotesByPatientId(patient.getIdPatient());
+        final float initialScale = 1f;
+        final float finalScale = 1.5f;
+
+        itemClickListener = (parent, position) -> {
+            Patient selectedPatient = patients.get(position);
+            Log.e("Listener", patients.toString());
+            // Faites quelque chose avec le patient sélectionné, par exemple naviguer vers un autre fragment
+            //  navigateToDetailsFragment(selectedPatient);
+        };
+
 
         makeAudio.setOnTouchListener((v, event) -> {
+            SharedPreferences sharedPreferences = requireContext().getSharedPreferences("LoginData", MODE_PRIVATE);
+            String phoneNumber = sharedPreferences.getString("phoneNumber", "000000000");
+
+            Personnel personnel = dbHelper.getPersonnelByPhoneNumber(phoneNumber);
+
+            File filesDir = getActivity().getExternalFilesDir(null);
+            File outpoutFile = new File(filesDir, personnel.getNomPersonnel()
+                    + patient.getNomPatient() + generateAlphanumericFileName(8) + ".3gp");
+            String fileName = outpoutFile.getAbsolutePath();
+            detailsAdapter = new DetailsAdapter(requireContext(), vocalNotes);
+            ArrayList<VocalNote> updatedNotes = dbHelper.getVocalNotesByPatientId(patient.getIdPatient());
+            if (detailsAdapter!= null) { // Vérification pour éviter NullPointerException
+                detailsAdapter.updateNotes(updatedNotes);
+            } else {
+                Log.e("DetailsFragment", "DetailsAdapter is null");
+            }
             switch (event.getAction()) {
+
                 case MotionEvent.ACTION_DOWN:
-                    // Commencez la tâche
-                    startRecording();
-                    ObjectAnimator scaleUpAnimator = ObjectAnimator.ofFloat(v, "scaleX", finalScale);
-                    scaleUpAnimator.setDuration(200); // Durée de l'animation
-                    scaleUpAnimator.start();
-                    scaleUpAnimator.addListener(new AnimatorListenerAdapter() {
+                    if (ContextCompat.checkSelfPermission(requireActivity(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(requireActivity(),
+                                new String[]{Manifest.permission.RECORD_AUDIO},
+                                REQUEST_RECORD_AUDIO_PERMISSION);
+                    } else {
+                        // La permission a déjà été accordée, vous pouvez démarrer l'enregistrement immédiatement
+                        startRecording(fileName);
+                        dbHelper.insertAudioRecord(patient.getIdPatient(), (int) personnel.getIdPersonnel(), fileName, personnel.getNomPersonnel());
+
+                    }
+                    ObjectAnimator scaleUpAnimatorX = ObjectAnimator.ofFloat(v, "scaleX", finalScale);
+                    ObjectAnimator scaleUpAnimatorY = ObjectAnimator.ofFloat(v, "scaleY", finalScale);
+                    scaleUpAnimatorX.setDuration(200); // Durée de l'animation
+                    scaleUpAnimatorY.setDuration(200); // Durée de l'animation
+                    scaleUpAnimatorY.start();
+                    scaleUpAnimatorX.start();
+                    scaleUpAnimatorY.addListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            super.onAnimationEnd(animation);
+                            // Ajoutez ici toute logique supplémentaire à exécuter après l'animation
+                        }
+                    });
+                    scaleUpAnimatorX.addListener(new AnimatorListenerAdapter() {
                         @Override
                         public void onAnimationEnd(Animator animation) {
                             super.onAnimationEnd(animation);
@@ -113,117 +196,56 @@ public class DetailsFragment extends Fragment {
                     });
                     v.performClick();
 
+
                     break;
                 case MotionEvent.ACTION_UP:
+
+
                     // Arrêtez la tâche
-                    stopRecording();
+                    // onRecord(false, fileName);
                     ObjectAnimator scaleDownAnimator = ObjectAnimator.ofFloat(v, "scaleX", initialScale);
-                    scaleDownAnimator.setDuration(200); // Durée de l'animation
+                    ObjectAnimator scaleDownAnimatorY = ObjectAnimator.ofFloat(v, "scaleY", initialScale);
+                    scaleDownAnimator.setDuration(200);
+                    scaleDownAnimatorY.setDuration(200);
                     scaleDownAnimator.start();
+                    scaleDownAnimatorY.start();
+
                     break;
             }
             return true;
         });
-        DetailsAdapter adapter = new DetailsAdapter((List<PatientWithNotes>) patientWithNotesMap.values());
+        DetailsAdapter adapter = new DetailsAdapter(requireContext(), vocalNotes);
         recyclerView.setAdapter(adapter);
 
         return view;
     }
 
-    public void playAudio(String audioFilePath) {
-        try {
-            // Libérer toute ressource média précédemment allouée
-            if (mediaPlayer != null) {
-                mediaPlayer.release();
-                mediaPlayer = null;
-            }
-
-            // Initialiser le MediaPlayer avec le chemin du fichier audio
-            mediaPlayer = new MediaPlayer();
-            mediaPlayer.setDataSource(audioFilePath);
-            mediaPlayer.prepare(); // Préparer le MediaPlayer avant de démarrer la lecture
-            mediaPlayer.start(); // Démarrer la lecture de l'audio
-
-            // Gestion des erreurs
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if (mediaPlayer != null) {
-            mediaPlayer.release();
-            mediaPlayer = null;
+    public void onStop() {
+        super.onStop();
+        if (recorder != null) {
+            recorder.release();
+            recorder = null;
+        }
+        if (player != null) {
+            player.release();
+            player = null;
         }
     }
-
-
-    private void startRecording() {
-        try {
-            mediaRecorder = new MediaRecorder();
-            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-
-            // Obtenez le répertoire de fichiers externes de l'application pour le stockage sûr
-            File directory = requireContext().getExternalFilesDir(Environment.DIRECTORY_MUSIC);
-            if (directory != null) {
-                audioFilePath = directory.getAbsolutePath() + "/myaudio.3gp"; // Construisez le chemin complet du fichier
-            } else {
-                throw new IOException("Impossible d'accéder au répertoire de fichiers externes de l'application.");
-            }
-
-            mediaRecorder.setOutputFile(audioFilePath);
-            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-
-            mediaRecorder.prepare();
-            mediaRecorder.start();
-            isRecording = true;
-            startTime = System.currentTimeMillis();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    private void stopRecording() {
-        if (mediaRecorder != null) {
-            mediaRecorder.stop();
-            mediaRecorder.release();
-            mediaRecorder = null;
-            isRecording = false;
-
-            long endTime = System.currentTimeMillis();
-            long duration = endTime - startTime;
-            SharedPreferences sharedPreferences = requireContext().getSharedPreferences("LoginData", MODE_PRIVATE);
-            String author = sharedPreferences.getString("nomPersonnel", "Doctor");
-
-            dbHelper.insertAudioRecord(patient.getIdPatient(), 1, audioFilePath, author);
-            // Save the audio file path in the database
-
-
-            // Optionally, log the duration of the recording
-            Log.d("RecordingDuration", "Duration: " + duration);
-        }
-    }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 100 && grantResults.length > 0) { // Vérifiez le code de requête
-            boolean permissionGranted = grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED;
-
-            if (permissionGranted) {
-                // Les permissions ont été accordées, vous pouvez maintenant enregistrer l'audio
-                // Par exemple, vous pouvez mettre à jour l'interface utilisateur pour indiquer que l'utilisateur peut commencer à enregistrer
-                Toast.makeText(getActivity(), "Permissions accordées, vous pouvez maintenant enregistrer.", Toast.LENGTH_LONG).show();
-            } else {
-                // Les permissions ont été refusées
-                // Informez l'utilisateur ou gérez le cas où l'enregistrement n'est pas possible
-                Toast.makeText(getActivity(), "Permissions refusées, l'enregistrement n'est pas possible.", Toast.LENGTH_LONG).show();
-            }
+        switch (requestCode) {
+            case REQUEST_RECORD_AUDIO_PERMISSION:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // La permission a été accordée, vous pouvez démarrer l'enregistrement
+                    startRecording(fileName);
+                } else {
+                    // La permission a été refusée, informez l'utilisateur
+                    Toast.makeText(getActivity(), "La permission d'enregistrement audio est nécessaire pour enregistrer.", Toast.LENGTH_LONG).show();
+                }
+                break;
         }
     }
 
