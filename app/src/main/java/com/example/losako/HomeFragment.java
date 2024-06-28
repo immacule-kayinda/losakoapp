@@ -45,12 +45,12 @@ public class HomeFragment extends Fragment {
         recyclerViewPatients.setLayoutManager(new LinearLayoutManager(requireContext()));
         return view;
     }
-
+    DatabaseHelper dbHelper;
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        DatabaseHelper dbHelper = DatabaseHelper.getInstance(requireContext());
+        this.dbHelper = DatabaseHelper.getInstance(requireContext());
 
         FloatingActionButton floatingActionButton = view.findViewById(R.id.create_patient);
         TextInputLayout searchInputLayout = view.findViewById(R.id.search_edit_text);
@@ -94,6 +94,7 @@ public class HomeFragment extends Fragment {
     }
     private void filterPatients(String searchText) {
         ArrayList<Patient> filteredPatients = new ArrayList<>();
+        ArrayList<Patient> patients = dbHelper.getAllPatients();
         for (Patient patient : patients) {
             if (patient.getNomPatient().toLowerCase().contains(searchText.toLowerCase())) {
                 filteredPatients.add(patient);

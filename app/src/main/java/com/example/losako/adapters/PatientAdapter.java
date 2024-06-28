@@ -9,7 +9,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.losako.MainActivity;
 import com.example.losako.R;
 import com.example.losako.models.Patient;
 
@@ -44,7 +43,6 @@ public class PatientAdapter extends RecyclerView.Adapter<PatientAdapter.PatientV
         holder.tvDateVenu.setText(patient.getDateVenuPatient());
 
         holder.itemView.setOnClickListener(v -> itemClickListener.onItemClick(v, position));
-
     }
 
     @Override

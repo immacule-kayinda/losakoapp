@@ -16,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +24,8 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -62,6 +65,7 @@ public class DetailsFragment extends Fragment {
     private long startTime;
     // Requesting permission to RECORD_AUDIO
     private boolean permissionToRecordAccepted = false;
+    private DetailsAdapter detailsAdapter;
 
     public DetailsFragment() {
         // Required empty public constructor
@@ -83,7 +87,6 @@ public class DetailsFragment extends Fragment {
         }
         return sb.toString() + ".mp3"; // Ajoutez l'extension de fichier souhaitée
     }
-
 
     private void startRecording(String fileName) {
         try {
@@ -112,7 +115,6 @@ public class DetailsFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
     }
-    private DetailsAdapter detailsAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -123,19 +125,25 @@ public class DetailsFragment extends Fragment {
         RecyclerView recyclerView = view.findViewById(R.id.audio_list_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         CustomFloatingActionButton makeAudio = view.findViewById(R.id.make_audio);
-        TextView tvNom = view.findViewById(R.id.tvLastName);
-        TextView tvPrenom = view.findViewById(R.id.tvFirstName);
-        TextView tvPostNom = view.findViewById(R.id.tvMiddleName);
+        TextView tvFullName = view.findViewById(R.id.tvFullName);
+        TextView tvMaladie = view.findViewById(R.id.tvMaladieFragment);
+        TextView tvPhoneNumber = view.findViewById(R.id.tvPhoneNumber);
+        TextView tvDateVenu = view.findViewById(R.id.tvDataeArrive);
 
-        tvNom.setText(patient.getNomPatient());
-        tvPostNom.setText(patient.getPostnomPatient());
-        tvPrenom.setText(patient.getPrenomPatient());
+        tvFullName.setText(patient.getFullName());
+        tvMaladie.setText(patient.getMaladiePatient());
+        tvPhoneNumber.setText(patient.getPhoneNumberPatient());
+        tvDateVenu.setText(patient.getFormatedDateVenuPatient());
 
         DatabaseHelper dbHelper = DatabaseHelper.getInstance(requireContext());
         ArrayList<VocalNote> vocalNotes = dbHelper.getVocalNotesByPatientId(patient.getIdPatient());
         final float initialScale = 1f;
         final float finalScale = 1.5f;
 
+        ImageView button = view.findViewById(R.id.back_button);
+        button.setOnClickListener(v -> {
+            navigateToHomeFragment();
+        });
         itemClickListener = (parent, position) -> {
             Patient selectedPatient = patients.get(position);
             Log.e("Listener", patients.toString());
@@ -156,7 +164,7 @@ public class DetailsFragment extends Fragment {
             String fileName = outpoutFile.getAbsolutePath();
             detailsAdapter = new DetailsAdapter(requireContext(), vocalNotes);
             ArrayList<VocalNote> updatedNotes = dbHelper.getVocalNotesByPatientId(patient.getIdPatient());
-            if (detailsAdapter!= null) { // Vérification pour éviter NullPointerException
+            if (detailsAdapter != null) { // Vérification pour éviter NullPointerException
                 detailsAdapter.updateNotes(updatedNotes);
             } else {
                 Log.e("DetailsFragment", "DetailsAdapter is null");
@@ -218,6 +226,13 @@ public class DetailsFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         return view;
+    }
+
+    private void navigateToHomeFragment() {
+        FragmentTransaction transaction = getParentFragmentManager().beginTransaction();
+        HomeFragment homeFragment = new HomeFragment();
+        transaction.replace(R.id.fragment_container, homeFragment);
+        transaction.commit();
     }
 
     @Override

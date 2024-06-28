@@ -18,7 +18,7 @@
             android:id="@+id/connexion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/connection_title"
+            android:hint="@string/connection_title"
             android:textAlignment="center"
             android:textAppearance="@style/TextAppearance.AppCompat.Display1"
             android:textStyle="bold"
@@ -60,7 +60,8 @@
             app:boxCornerRadiusBottomStart="10dp"
             app:boxCornerRadiusTopEnd="10dp"
             app:boxCornerRadiusTopStart="10dp"
-            app:hintTextColor="@color/black"
+            android:imeOptions="actionNext"
+            android:maxLength="50"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textInputLayout2"
@@ -89,7 +90,6 @@
             app:layout_constraintTop_toBottomOf="@+id/textInputLayout3">
 
             <TextView
-                android:id="@+id/textView"
                 android:layout_width="178dp"
                 android:layout_height="22dp"
                 android:text="@string/dont_have_account" />

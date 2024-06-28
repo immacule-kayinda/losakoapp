@@ -1,6 +1,8 @@
 package com.example.losako.models;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Patient implements Serializable {
     private long idPatient;
@@ -11,6 +13,19 @@ public class Patient implements Serializable {
     private String phoneNumberPatient;
     private String maladiePatient;
     private String dateVenuPatient;
+
+    public String getFormatedDateVenuPatient() {
+        SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat outputFormat = new SimpleDateFormat("dd MMMM yyyy");
+
+        try {
+            Date date = inputFormat.parse(this.dateVenuPatient);
+            return outputFormat.format(date);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     // Constructeur
     public Patient() {
@@ -48,6 +63,10 @@ public class Patient implements Serializable {
         this.phoneNumberPatient = phoneNumberPatient;
         this.maladiePatient = maladiePatient;
         this.dateVenuPatient = dateVenuPatient;
+    }
+
+    public String getFullName() {
+        return nomPatient + ' ' + postnomPatient + " " + prenomPatient;
     }
 
     public Patient clone() {

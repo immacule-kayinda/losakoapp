@@ -66,7 +66,7 @@ public class CreatePatientFragment extends Fragment {
 
 
             // Rafraîchissez les données des patients
-//            returnToHomeFragment();
+            returnToHomeFragment();
         });
 
         return view;

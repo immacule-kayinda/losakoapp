@@ -59,19 +59,22 @@ public class ProfileFragment extends Fragment {
         DatabaseHelper dbHelper = DatabaseHelper.getInstance(requireContext());
         Personnel personnel = dbHelper.getPersonnelByPhoneNumber(sharedPhoneNumber);
 
-        TextView nomPersonnel = binding.nomPersonnel; // Use binding to access views
-        nomPersonnel.setText(personnel.getNomPersonnel());
-        TextView postNomPersonnel = binding.postNomPersonnel;
-        postNomPersonnel.setText(personnel.getNomPersonnel());
-        TextView prenom = binding.prenomPersonnel;
-        prenom.setText(personnel.getNomPersonnel());
+
+        TextView nomPersonnel = binding.nomPersonnel;
+        String fullName = personnel.getPrenomPersonnel() + " " + personnel.getNomPersonnel();
+        nomPersonnel.setText(fullName);
         TextView specialisation = binding.specialisation;
         specialisation.setText(personnel.getSpecialisationPersonnel());
-        TextView adress = binding.adressPersonnel;
-        TextView phoneNumber = binding.numeroTelephone;
+        TextView adress = binding.adressePersonnel;
+        TextView phoneNumber = binding.phoneNumber;
+        TextView password = binding.password;
         adress.setText(personnel.getAdressPersonel());
         phoneNumber.setText(personnel.getPhoneNumberPersonnel());
-
+        StringBuilder hashPassword = new StringBuilder();
+        for (int i = 0; i < personnel.getPasswordPersonnel().length(); i++) {
+            hashPassword.append("*");
+        }
+        password.setText(hashPassword.toString());
         Button logout = binding.logout;
         logout.setOnClickListener(v -> {
             SharedPreferences prefs = requireContext().getSharedPreferences("LoginData", Context.MODE_PRIVATE);
@@ -88,14 +91,12 @@ public class ProfileFragment extends Fragment {
             @Override
             public void handleOnBackPressed() {
                 long currentTime = System.currentTimeMillis();
-                if (currentTime - lastPressTime > 2000) { // 2000 millisecondes = 2 secondes
+                if (currentTime - lastPressTime > 1000) {
                     pressCount++;
                     if (pressCount == 2) {
-                        // Autorise la sortie après deux pressions séparées par au moins 2 secondes
                         requireActivity().finish();
-                        pressCount = 0; // Réinitialise le compteur pour les prochaines pressions
+                        pressCount = 0;
                     } else {
-                        // Réinitialise le compteur si moins de deux pressions ont été détectées avec suffisamment de temps entre elles
                         pressCount = 0;
                     }
                 }
