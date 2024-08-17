@@ -10,30 +10,34 @@ import androidx.fragment.app.FragmentTransaction;
 import com.example.losako.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
-    ActivityMainBinding binding;
+
+    private EditText editTextDollarAmount;
+    private EditText editTextExchangeRate;
+    private TextView textViewResult;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        setContentView(R.layout.activity_main);
 
+        editTextDollarAmount = findViewById(R.id.editTextDollarAmount);
+        editTextExchangeRate = findViewById(R.id.editTextExchangeRate);
+        textViewResult = findViewById(R.id.textViewResult);
 
-        binding.bottomNavigationView.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.profil) {
-                replaceFragment(new ProfileFragment());
-            } else if (item.getItemId() == R.id.home) {
-                replaceFragment(new HomeFragment());
+        Button buttonConvert = findViewById(R.id.buttonConvert);
+        buttonConvert.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    double dollarAmount = Double.parseDouble(editTextDollarAmount.getText().toString());
+                    double exchangeRate = Double.parseDouble(editTextExchangeRate.getText().toString());
+                    double result = dollarAmount * exchangeRate;
+                    textViewResult.setText(String.valueOf(result));
+                } catch (NumberFormatException e) {
+                    // Gérer l'erreur de format
+                    Toast.makeText(MainActivity.this, "Veuillez entrer des valeurs valides", Toast.LENGTH_SHORT).show();
+                }
             }
-
-            return true;
         });
-    }
-
-    private void replaceFragment(Fragment fragment) {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.fragment_container, fragment);
-        fragmentTransaction.commit();
     }
 }
