@@ -1,6 +1,11 @@
 package com.example.losako;
 
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -25,18 +30,15 @@ public class MainActivity extends AppCompatActivity {
         textViewResult = findViewById(R.id.textViewResult);
 
         Button buttonConvert = findViewById(R.id.buttonConvert);
-        buttonConvert.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                try {
-                    double dollarAmount = Double.parseDouble(editTextDollarAmount.getText().toString());
-                    double exchangeRate = Double.parseDouble(editTextExchangeRate.getText().toString());
-                    double result = dollarAmount * exchangeRate;
-                    textViewResult.setText(String.valueOf(result));
-                } catch (NumberFormatException e) {
-                    // Gérer l'erreur de format
-                    Toast.makeText(MainActivity.this, "Veuillez entrer des valeurs valides", Toast.LENGTH_SHORT).show();
-                }
+        buttonConvert.setOnClickListener(view -> {
+            try {
+                double dollarAmount = Double.parseDouble(editTextDollarAmount.getText().toString());
+                double exchangeRate = Double.parseDouble(editTextExchangeRate.getText().toString());
+                double result = dollarAmount * exchangeRate;
+                textViewResult.setText(String.valueOf(result));
+            } catch (NumberFormatException e) {
+                // Gérer l'erreur de format
+                Toast.makeText(MainActivity.this, "Veuillez entrer des valeurs valides", Toast.LENGTH_SHORT).show();
             }
         });
     }

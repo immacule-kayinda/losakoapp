@@ -16,17 +16,6 @@
         android:theme="@style/Theme.Losako"
         tools:targetApi="31">
         <activity
-            android:name=".LoginActivity"
-            android:exported="false" />
-        <activity
-            android:name=".CreateAcountActivity"
-            android:exported="false" /> <!-- SplashActivity est maintenant configurée comme l'activité de démarrage -->
-        <activity
-            android:name=".SplashActivity"
-            android:exported="true">
-
-        </activity>
-        <activity
             android:name=".MainActivity"
             android:exported="true">
 
